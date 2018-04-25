@@ -16,8 +16,11 @@ import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 
+
 public class MainActivity extends AppCompatActivity {
     //Login Activity
+
+
     SharedPreferences loginData;
     SharedPreferences storedMessages;
 

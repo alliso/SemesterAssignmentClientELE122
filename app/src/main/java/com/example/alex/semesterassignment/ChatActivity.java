@@ -16,9 +16,6 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -80,35 +77,7 @@ public class ChatActivity extends AppCompatActivity {
             }
         });
 
-        new Thread(){
-             public void run(){
-                 try {
-                     sc = new Socket("192.168.56.1",7777);
-                     socketReader = new BufferedReader(new InputStreamReader(sc.getInputStream()));
-                     socketWriter = new PrintWriter(sc.getOutputStream());
-
-                     socketWriter.println(user);
-                     socketWriter.flush();
-                 } catch (IOException e) {
-                     e.printStackTrace();
-                 }
-                 while(true){
-                     try {
-                         int i = 0;
-                         String aux = socketReader.readLine();
-                         messagesList.add(aux);
-                         runOnUiThread(new Runnable() {
-                             @Override
-                             public void run() {
-                                 messageAdapter.notifyDataSetChanged();
-                             }
-                         });
-                     } catch (IOException e) {
-                         Log.i("conexion","Fallo al conectar");
-                     }
-                 }
-             }
-         }.start();
+        openConnection();
     }
 
     /**
@@ -126,6 +95,70 @@ public class ChatActivity extends AppCompatActivity {
         }.start();
         sendingMessage.setText("");
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        closeConnection();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        //closeConnection();
+    }
+
+
+    private void closeConnection(){
+        new Thread(){
+            public void run(){
+                try {
+                    socketWriter.println("shutdown");
+                    socketWriter.flush();
+                    socketReader.close();
+                    socketWriter.close();
+                    sc.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+    }
+
+
+    private void openConnection(){
+        new Thread(){
+            public void run(){
+                try {
+                    sc = new Socket("192.168.56.1",7777);
+                    socketReader = new BufferedReader(new InputStreamReader(sc.getInputStream()));
+                    socketWriter = new PrintWriter(sc.getOutputStream());
+
+                    socketWriter.println(user);
+                    socketWriter.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                while(true){
+                    try {
+                        int i = 0;
+                        String aux = socketReader.readLine();
+                        messagesList.add(aux);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                messageAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    } catch (IOException e) {
+                        Log.i("conexion","Fallo al conectar");
+                    }
+                }
+            }
+        }.start();
+    }
+
+
 
     /**
      * First of all converts the ArrayList with messages to JSON and then store it in preferences.
